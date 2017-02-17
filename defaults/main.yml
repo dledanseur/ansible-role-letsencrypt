@@ -47,6 +47,8 @@ letsencrypt_default_key_owner: 'root'
 letsencrypt_default_key_group: 'root'
 letsencrypt_default_key_permissions: '0600'
 
+letsencrypt_default_cert_permissions: '0600'
+
 # the minimum age (in days) after which a certificate will be renewed
 letsencrypt_min_renewal_age: 60
 

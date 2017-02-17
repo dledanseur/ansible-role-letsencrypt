@@ -109,10 +109,11 @@
 - name: generate certificate renewal script
   template:
     src: renew-certs.py
-    dest: "{{ acme_tiny_data_directory }}/renew-certs.py"
+    dest: "{{ acme_tiny_data_directory }}/renew-certs-{{item.name}}.py"
     mode: 0700
     owner: '{{ letsencrypt_user }}'
     group: '{{ letsencrypt_group }}'
+  with_items: "{{ letsencrypt_certs }}"
 
 - name: download intermediate certificate
   get_url: >
@@ -161,7 +162,7 @@
   tags: ['letsencrypt_keys']
 
 - name: generate the initial certificate
-  command: ./renew-certs.py
+  command: "./renew-certs-{{item.name}}.py"
   args:
     chdir: "{{ acme_tiny_data_directory }}"
   become_user: "{{ letsencrypt_user }}"
@@ -169,6 +170,7 @@
   failed_when: (generate_initial_cert.stdout is defined and
     ('error' in generate_initial_cert.stdout or 'Error' in generate_initial_cert.stdout
       or 'Error' in generate_initial_cert.stderr))
+  with_items: "{{ letsencrypt_certs }}"
   tags: ['letsencrypt_keys']
 
 - name: generate chained certificate
@@ -192,12 +194,12 @@
 
 - name: install cronjob for key generation
   cron:
-    job: "cd {{ acme_tiny_data_directory }} && ./renew-certs.py"
+    job: "cd {{ acme_tiny_data_directory }} && ./renew-certs-{{item.name}}.py"
     day: "{{ letsencrypt_cronjob_daysofmonth }}"
     hour: 4
     minute: 30
     state: present
-    name: "letsencrypt certificate renewal"
+    name: "letsencrypt {{ item.name }} certificate renewal"
     user: "{{ letsencrypt_user }}"
+  with_items: "{{ letsencrypt_certs }}"
 
-...
